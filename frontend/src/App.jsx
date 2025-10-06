@@ -1,26 +1,79 @@
+import { useEffect } from "react";
 import { useState } from "react";
 
 function App() {
   const [notes, setNotes] = useState([]);
 
-  const addNote = (title, content) => {
-    console.log(title);
-    console.log(content);
+  const fetchNote = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/notes");
+      const data = await response.json();
+      setNotes(data.data);
+      console.log(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchNote();
+  }, []);
+
+  const addNote = async (newTitle, newContent) => {
+    try {
+      const res = await fetch("http://localhost:5000/notes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ title: newTitle, content: newContent }),
+      });
+
+      const result = await res.json();
+      console.log(result.data);
+
+      fetchNote();
+    } catch (error) {
+      console.warning(error);
+    }
     setNotes([]);
   };
 
-  const handleDelete = (id) => {
-    console.log(id);
+  const HandleupdateNote = async (id, newTitle, newContent) => {
+    try {
+      const res = await fetch("http://localhost:5000/notes", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ title: newTitle, content: newContent }),
+      });
+
+      const result = await res.json();
+      console.log(result.data);
+
+      fetchNote();
+    } catch (error) {
+      console.warning(error);
+    }
+    setNotes([]);
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await fetch(`http://localhost:5000/notes/${id}`, {
+        method: "DELETE",
+      });
+      console.log("data berhasil di delete");
+
+      fetchNote();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const getNoteById = (id) => {
     console.log(id);
-  };
-
-  const updateNote = (id, newTitle, newContent) => {
-    console.log(id);
-    console.log(newTitle);
-    console.log(newContent);
   };
 
   return (
@@ -31,7 +84,7 @@ function App() {
         <NoteList
           notes={notes}
           onDelete={handleDelete}
-          onUpdate={updateNote}
+          onUpdate={HandleupdateNote}
           onGetById={getNoteById}
         />
       </main>
@@ -94,39 +147,97 @@ const NoteForm = ({ onAddNote }) => {
 };
 
 const NoteItem = ({ note, onDelete, onUpdate }) => {
-  console.log(note);
-  console.log(onDelete);
-  console.log(onUpdate);
+  const [isEdit, setIsEdit] = useState(false);
+  const [titleEdit, setTitleEdit] = useState(note.title);
+  const [contentEdit, setContentEdit] = useState(note.content);
+
+  const handleCancel = () => {
+    setIsEdit(false);
+    setTitleEdit(note.title);
+    setContentEdit(note.content);
+  };
 
   return (
-    <div className="rounded-lg shadow-md bg-white w-[300px] p-5">
-      <p className="font-medium text-xl">{note.title}</p>
-      <p className="text-sm text-gray-500">
-        ~{showFormattedDate(note.createAt)}
-      </p>
-      <p className="mt-2">{note.content}</p>
-      <div className="mt-4 flex gap-2">
-        <button className="bg-yellow-500 text-white px-3 py-1 rounded">
-          Edit
-        </button>
-        <button className="bg-red-500 text-white px-3 py-1 rounded">
-          Delete
-        </button>
+    <div className="rounded-lg shadow-md bg-white w-full p-5">
+      <div>
+        {isEdit ? (
+          <>
+            <input
+              type="text"
+              className="rounded-sm outline outline-gray-400 p-3"
+              value={titleEdit}
+              onChange={(e) => setTitleEdit(e.target.value)}
+            />
+            <textarea
+              className="rounded-sm outline outline-gray-400 p-3"
+              value={contentEdit}
+              onChange={(e) => setContentEdit(e.target.value)}
+            />
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={handleCancel}
+                className="bg-red-500 text-white px-3 py-1 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-green-500 text-white px-3 py-1 rounded"
+                onClick={() => {
+                  onUpdate(note.id, titleEdit, contentEdit);
+                  setIsEdit(false);
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </>
+        ) : null}
+      </div>
+      <div className={isEdit ? "hidden" : "block"}>
+        <p className="font-medium text-xl">{note.title}</p>
+        <p className="text-sm text-gray-500">
+          ~{showFormattedDate(note.created_at)}
+        </p>
+        <p className="mt-2">{note.content}</p>
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={() => setIsEdit(!isEdit)}
+            className="bg-yellow-500 text-white px-3 py-1 rounded"
+          >
+            Edit
+          </button>
+          <button
+            className="bg-red-500 text-white px-3 py-1 rounded"
+            onClick={() => {
+              onDelete(note.id);
+            }}
+          >
+            Delete
+          </button>
+        </div>
       </div>
     </div>
   );
 };
 
-const NoteList = ({ notes }) => {
+const NoteList = ({ notes, onDelete, onUpdate, onGetById }) => {
   return (
-    <section className="container py-8">
+    <section className="container px-2 md:px-0 py-8">
       <h2 className="inline-flex items-center gap-2 text-2xl font-medium mb-6">
         <img src="/note.svg" alt="note icon" className="w-8 h-8" />
         Notes
       </h2>
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {notes.length > 0 ? (
-          notes.map((note) => <NoteItem key={note.id} note={note} />)
+          notes.map((note) => (
+            <NoteItem
+              key={note.id}
+              note={note}
+              onDelete={onDelete}
+              onUpdate={onUpdate}
+              onGetById={onGetById}
+            />
+          ))
         ) : (
           <h1>Data Kosong</h1>
         )}
