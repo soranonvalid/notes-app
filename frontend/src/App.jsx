@@ -4,7 +4,7 @@ import { useState } from "react";
 function App() {
   const [notes, setNotes] = useState([]);
 
-  const basedUrl = "https://notes-app-api-xi.vercel.app/notes";
+  const basedUrl = "https://notes-app-api-xi.vercel.app";
 
   const fetchNote = async () => {
     try {
@@ -23,7 +23,7 @@ function App() {
 
   const addNote = async (newTitle, newContent) => {
     try {
-      const res = await fetch(basedUrl, {
+      const res = await fetch(`${basedUrl}/notes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -43,7 +43,7 @@ function App() {
 
   const HandleupdateNote = async (id, newTitle, newContent) => {
     try {
-      const res = await fetch(`${basedUrl}/${id}`, {
+      const res = await fetch(`${basedUrl}/notes/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -63,7 +63,7 @@ function App() {
 
   const handleDelete = async (id) => {
     try {
-      await fetch(`${basedUrl}/${id}`, {
+      await fetch(`${basedUrl}/notes/${id}`, {
         method: "DELETE",
       });
       console.log("data berhasil di delete");
