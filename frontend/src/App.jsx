@@ -8,7 +8,7 @@ function App() {
 
   const fetchNote = async () => {
     try {
-      const response = await fetch(basedUrl);
+      const response = await fetch(`${basedUrl}/notes`);
       const data = await response.json();
       setNotes(data.data);
       console.log(data);
