@@ -111,12 +111,18 @@ const Navbar = () => {
 const NoteForm = ({ onAddNote }) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [error, setError] = useState();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onAddNote(title, content);
-    setTitle("");
-    setContent("");
+    if (title.trim() === "" || content.trim() === "") {
+      setError("A field is missing!");
+    } else {
+      onAddNote(title, content);
+      setTitle("");
+      setContent("");
+      setError();
+    }
   };
 
   return (
@@ -125,18 +131,23 @@ const NoteForm = ({ onAddNote }) => {
         <input
           type="text"
           placeholder="Title"
-          className="rounded-sm outline outline-gray-400 p-3"
-          required
+          className={`rounded-sm outline p-3 ${
+            !error ? "outline-gray-400" : "outline-red-500"
+          }`}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
         <textarea
           placeholder="Content"
-          className="resize-y min-h-14 rounded-sm outline outline-gray-400 p-3"
-          required
+          className={`resize-y min-h-14 rounded-sm outline  p-3 ${
+            !error ? "outline-gray-400" : "outline-red-500"
+          }`}
           value={content}
           onChange={(e) => setContent(e.target.value)}
         />
+        <p className="text-[0.91em] italic text-red-500">
+          {setError === "" ? "" : error}
+        </p>
         <button
           type="submit"
           className="bg-blue-500 text-white font-semibold rounded-lg py-3"
@@ -229,7 +240,13 @@ const NoteList = ({ notes, onDelete, onUpdate, onGetById }) => {
         <img src="/note.svg" alt="note icon" className="w-8 h-8" />
         Notes
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div
+        className={
+          notes.length > 0
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            : "w-full"
+        }
+      >
         {notes.length > 0 ? (
           notes.map((note) => (
             <NoteItem
@@ -241,7 +258,15 @@ const NoteList = ({ notes, onDelete, onUpdate, onGetById }) => {
             />
           ))
         ) : (
-          <h1>Data Kosong</h1>
+          <div className="w-full h-full flex items-center justify-center flex-col gap-5">
+            <img
+              src="https://media2.giphy.com/media/v1.Y2lkPTZjMDliOTUybmV2N3A2eHJqdTFpdmVrNHQ2NmZhbjJiNHJlc3ZvbDl6bWo1ODZuMyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/L05HgB2h6qICDs5Sms/200w.gif"
+              alt=""
+              width="30"
+              height="30"
+            />
+            Loading...
+          </div>
         )}
       </div>
     </section>
